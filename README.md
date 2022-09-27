@@ -2,7 +2,7 @@
 
 Build the container:
 
-`sudo singularity build --sandbox xfoil.sif xfoil.def`
+`sudo singularity build xfoil.def`
 
 Execute the container:
 
