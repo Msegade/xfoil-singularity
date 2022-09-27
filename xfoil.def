@@ -1,0 +1,39 @@
+Bootstrap: docker
+From: archlinux:latest
+
+%help
+    Arch linux enviroment to run xfoil and python scripts
+
+%labels
+    CREATOR = Miguel Segade
+
+%environment
+    export MY_VAR='This is my enviroment variable'
+
+%files
+
+%post
+    pacman -Syu --noconfirm
+    pacman -S --noconfirm wget 
+    # Makepkg dependencies
+    pacman -S --noconfirm binutils fakeroot patch make
+    # Xfoil dependencies
+    pacman -S --noconfirm gcc-libs libx11 gcc-fortran
+
+    useradd -m builduser
+    su - builduser
+    wget 'https://aur.archlinux.org/cgit/aur.git/snapshot/xfoil.tar.gz'
+    tar xf xfoil.tar.gz
+    mv xfoil /home/builduser/.
+    chown -R builduser:builduser /home/builduser/xfoil
+    runuser -l builduser -c 'cd /home/builduser/xfoil && makepkg'
+
+    pacman -U --noconfirm /home/builduser/xfoil/xfoil-6.99-3-x86_64.pkg.tar.zst
+
+    # Python parser
+    pacman -S --noconfirm python-pip
+    pip install 'typer[all]'
+    
+
+%runscript
+
