@@ -9,11 +9,7 @@ import os
 
 def safeIncArange(start, stop, step):
         values = np.arange(start, stop+step, step)
-        # Check overflow in np.arange
-        if step < 0:
-            if values[-1] < stop: values = values[:-1]
-        elif step > 0:
-            if values[-1] > stop: values = values[:-1]
+        if not np.isclose(values[-1], stop): values = values[:-1]
         return values
 
 def  analyzeFailure(alphaValuesi, results):
