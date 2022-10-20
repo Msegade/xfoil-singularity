@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 
 #reynolds = np.logspace(4, 8, num=1000)
-reynolds = np.arange(10000, 20000000, 10000)
+reynolds = np.arange(540000, 20000000, 10000)
 
 def runReynolds(rey):
         rey = round(rey, 1)

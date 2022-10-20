@@ -7,16 +7,31 @@ import typer
 import sys 
 import os
 
+def safeIncArange(start, stop, step):
+        values = np.arange(start, stop+step, step)
+        # Check overflow in np.arange
+        if step < 0:
+            if values[-1] < stop: values = values[:-1]
+        elif step > 0:
+            if values[-1] > stop: values = values[:-1]
+        return values
+
 def  analyzeFailure(alphaValuesi, results):
 
     aoaR = np.array([float(r[0]) for r in results])
     alphaValuesi = np.around(alphaValuesi, 3)
+    if len(alphaValuesi) == 1:
+        print("Last element could not be calculated")
+        # To stop iterating
+        converged = True
+        failedElement = None
+        return converged, failedElement
+
     alphaInc = round((alphaValuesi[0]-alphaValuesi[1])*-1, 3)
 
     # If it did not manage to converge a single AoA
     if len(aoaR) == 0:
         converged = False
-        # Determine if it is left sweep or right sweep
         failedElement = alphaValuesi[0] + alphaInc
         print("Not a single value converged")
         return converged, round(failedElement, 3)
@@ -126,7 +141,7 @@ def runXfoilSeq(naca, re, alphaI, alphaE, alphaInc):
         l = line.split()
         results.append([l[0], l[1], l[2], l[4]])
 
-    alphaValuesi = np.arange(alphaI, alphaE+alphaInc, alphaInc)
+    alphaValuesi = safeIncArange(alphaI, alphaE, alphaInc)
     ni = len(alphaValuesi)
     n = len(results)
 
@@ -138,7 +153,7 @@ class XfoilResults:
 
     def __init__(self, naca, re, alphai, alphae, alphainc):
 
-        self.alphaValues = np.arange(alphai, alphae+alphainc, alphainc)
+        self.alphaValues = safeIncArange(alphai, alphae, alphainc)
         self.naca = naca
         self.re = re
         self.alphai = alphai
@@ -166,7 +181,7 @@ class XfoilResults:
                 converged, failedElement, results = runXfoilSeq(self.naca, self.re, 
                                                     alphai, alphae, self.alphainc)
                 if not converged:
-                    alphaValues = np.arange(failedElement, alphae+self.alphainc, self.alphainc)
+                    alphaValues = safeIncArange(failedElement, alphae, self.alphainc)
                 self.append(results)
 
             # Right sweep
@@ -178,7 +193,7 @@ class XfoilResults:
                 converged, failedElement, results = runXfoilSeq(self.naca, self.re, 
                                                     alphai, alphae, -self.alphainc)
                 if not converged:
-                    alphaValues = np.arange(failedElement, alphae-self.alphainc, -self.alphainc)
+                    alphaValues = safeIncArange(failedElement, alphae, -self.alphainc)
                 self.append(results)
 
 def clean():
