@@ -31,7 +31,7 @@ From: archlinux:latest
     pacman -U --noconfirm /home/builduser/xfoil/xfoil-6.99-3-x86_64.pkg.tar.zst
 
     # Python parser
-    pacman -S --noconfirm python-pip
+    pacman -S --noconfirm python-pip python-ipdb python-numpy python-pandas
     pip install 'typer[all]'
     
 
