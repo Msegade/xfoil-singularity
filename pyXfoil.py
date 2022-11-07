@@ -4,6 +4,7 @@ import pandas as pd
 from time import sleep
 import numpy as np
 import typer
+from typing import Tuple
 import sys 
 import os
 
@@ -93,7 +94,7 @@ def runXfoil(naca, re, alpha):
     #if 'Point written to dump file' not in child.stdout.decode('utf-8'):
     #    raise ConvergenceError('First point Failed')
 
-def runXfoilSeq(naca, re, alphaI, alphaE, alphaInc):
+def runXfoilSeq(naca, re, alphaI, alphaE, alphaInc, nPanels=240, rPos=(0.25, 0.0)):
 
     print(f"Runinng: {alphaI}, {alphaE}, {alphaInc}")
     pid = os.getpid()
@@ -102,6 +103,11 @@ def runXfoilSeq(naca, re, alphaI, alphaE, alphaInc):
     g f 
 
     {naca}
+    ppar 
+    n {nPanels}
+
+
+    xycm {rPos[0]} {rPos[1]}
     oper
     visc
     {re}
@@ -147,7 +153,7 @@ def runXfoilSeq(naca, re, alphaI, alphaE, alphaInc):
 
 class XfoilResults:
 
-    def __init__(self, naca, re, alphai, alphae, alphainc):
+    def __init__(self, naca, re, alphai, alphae, alphainc, rPos=(0.25, 0.0)):
 
         self.alphaValues = safeIncArange(alphai, alphae, alphainc)
         self.naca = naca
@@ -155,6 +161,7 @@ class XfoilResults:
         self.alphai = alphai
         self.alphae = alphae
         self.alphainc = alphainc
+        self.rPos = rPos
 
         self.df = pd.DataFrame(columns  = ['AoA', 'Cl', 'Cd', 'Cm'], dtype=float)
         self.converged = False
@@ -175,7 +182,7 @@ class XfoilResults:
                 alphai = round(alphaValues[0], 6)
                 alphae = round(alphaValues[-1], 6)
                 converged, failedElement, results = runXfoilSeq(self.naca, self.re, 
-                                                    alphai, alphae, self.alphainc)
+                                                    alphai, alphae, self.alphainc, rPos=self.rPos)
                 if not converged:
                     alphaValues = safeIncArange(failedElement, alphae, self.alphainc)
                 self.append(results)
@@ -187,7 +194,7 @@ class XfoilResults:
                 alphai = round(alphaValues[0], 6)
                 alphae = round(alphaValues[-1], 6)
                 converged, failedElement, results = runXfoilSeq(self.naca, self.re, 
-                                                    alphai, alphae, -self.alphainc)
+                                                    alphai, alphae, -self.alphainc, rPos=self.rPos)
                 if not converged:
                     alphaValues = safeIncArange(failedElement, alphae, -self.alphainc)
                 self.append(results)
@@ -200,14 +207,13 @@ def clean():
     (cwd / f'polar-{pid}.dump').unlink(missing_ok=True)
     (cwd / ':00.bl').unlink(missing_ok=True)
 
-
 cmd = typer.Typer()
 
 @cmd.command()
-def range(naca: str, re: float, alphai: float, alphae: float, alphainc: float):
+def range(naca: str, re: float, alphai: float, alphae: float, alphainc: float, 
+          rpos: Tuple[float, float] = typer.Argument((0.25, 0.0))):
 
-
-    xResults = XfoilResults(naca, re, alphai, alphae, alphainc)
+    xResults = XfoilResults(naca, re, alphai, alphae, alphainc, rpos)
     xResults.iterateXfoil()
     clean()
     xResults.df.drop_duplicates(subset='AoA', keep='last', inplace=True)
